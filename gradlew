@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Gradle Wrapper (generated)
+# Gradle Wrapper (fixed for Windows Bash)
 
-# Resolve script directory
-APP_HOME=$(cd "$(dirname \"$0\")" && pwd)
+# Resolve script directory robustly
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 # Find java executable
 if [ -n "$JAVA_HOME" ]; then
@@ -11,8 +11,8 @@ else
   JAVACMD=java
 fi
 
-# If not executable, try to locate in PATH
-if ! command -v "$JAVACMD" >/dev/null 2>&1; then
+# Fallback to PATH
+if ! command -v "$JAVACMD" > /dev/null 2>&1; then
   JAVACMD=$(command -v java)
 fi
 
@@ -21,5 +21,5 @@ if [ -z "$JAVACMD" ]; then
   exit 1
 fi
 
-# Execute Gradle Wrapper jar
-exec "$JAVACMD" -jar "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" "$@"
+# Execute the Gradle wrapper JAR
+exec "$JAVACMD" -jar "$SCRIPT_DIR/gradle/wrapper/gradle-wrapper.jar" "$@"
