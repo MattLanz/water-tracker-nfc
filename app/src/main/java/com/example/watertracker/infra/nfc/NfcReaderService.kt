@@ -8,6 +8,11 @@ import android.os.IBinder
 import com.example.watertracker.domain.repository.TagRepository
 import com.example.watertracker.domain.repository.WaterIntakeRepository
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -19,29 +24,32 @@ class NfcReaderService : Service() {
 
     @Inject lateinit var tagRepo: TagRepository
     @Inject lateinit var intakeRepo: WaterIntakeRepository
-    private val nfcAdapter: NfcAdapter? by lazy { NfcAdapter.getDefaultAdapter(this) }
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Service is started when the activity registers for foreground dispatch.
         return START_STICKY
     }
 
-    // This method should be called from the Activity's onNewIntent when an NFC tag is discovered.
     fun handleTag(tag: Tag) {
         val uid = NfcUtils.uidFromTag(tag)
-        // Use coroutine scope (e.g., lifecycleScope) in the Activity; here we launch a simple thread for demo.
-        Thread {
+        serviceScope.launch {
             val tagInfo = tagRepo.getTagInfo(uid)
             if (tagInfo != null) {
-                // Known bottle – add intake with its capacity.
                 intakeRepo.addIntake(System.currentTimeMillis(), tagInfo.capacityLiters)
             } else {
-                // Unknown – broadcast to UI to prompt registration.
-                val broadcast = Intent(ACTION_UNKNOWN_TAG).apply { putExtra(EXTRA_UID, uid) }
+                val broadcast = Intent(ACTION_UNKNOWN_TAG).apply {
+                    putExtra(EXTRA_UID, uid)
+                    setPackage(packageName)
+                }
                 sendBroadcast(broadcast)
             }
-        }.start()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceScope.cancel()
     }
 }

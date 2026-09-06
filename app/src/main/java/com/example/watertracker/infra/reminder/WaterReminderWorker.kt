@@ -9,18 +9,17 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.watertracker.domain.repository.WaterIntakeRepository
 import com.example.watertracker.data.local.UserPrefsRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.HiltAndroidApp
-import dagger.hilt.android.HiltWorker
+import androidx.hilt.work.HiltWorker
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
-import javax.inject.Inject
 
 @HiltWorker
-class WaterReminderWorker @Inject constructor(
-    @ApplicationContext private val context: Context,
+class WaterReminderWorker @AssistedInject constructor(
+    @Assisted private val context: Context,
+    @Assisted workerParams: WorkerParameters,
     private val intakeRepo: WaterIntakeRepository,
-    private val prefsRepo: UserPrefsRepository,
-    workerParams: WorkerParameters
+    private val prefsRepo: UserPrefsRepository
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {
@@ -29,7 +28,7 @@ class WaterReminderWorker @Inject constructor(
     }
 
     override suspend fun doWork(): Result {
-        val todayIntake = intakeRepo.getAllIntakes().sumOf { it.liters }
+        val todayIntake = intakeRepo.getAllIntakes().sumOf { it.liters.toDouble() }.toFloat()
         val goal = prefsRepo.dailyGoal.first()
         if (todayIntake < goal) {
             sendNotification("Stay hydrated", "You have logged $todayIntake L today (goal: $goal L)")
