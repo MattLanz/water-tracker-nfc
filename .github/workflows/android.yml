@@ -25,5 +25,5 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: Build with Gradle
         run: ./gradlew assembleDebug
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest
+      - name: Run instrumented Android tests
+        run: ./gradlew connectedDebugAndroidTest
