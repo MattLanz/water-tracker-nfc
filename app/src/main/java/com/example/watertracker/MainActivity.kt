@@ -1,6 +1,8 @@
 package com.example.watertracker
 
-import android.nfc.NfcAdapter
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -23,6 +25,17 @@ class MainActivity : ComponentActivity() {
     private var nfcAdapter: NfcAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Start NFC service if user enabled background logging (placeholder for Settings flag)
+        val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        val enableBackground = prefs.getBoolean("enable_background_logging", false)
+        if (enableBackground) {
+            val serviceIntent = Intent(this, com.example.watertracker.infra.service.WaterTrackerService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent)
+            } else {
+                startService(serviceIntent)
+            }
+        }
         super.onCreate(savedInstanceState)
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
 
