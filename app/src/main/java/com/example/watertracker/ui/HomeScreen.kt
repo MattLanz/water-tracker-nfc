@@ -22,9 +22,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.watertracker.viewmodel.HomeViewModel
+import com.example.watertracker.ui.RegistrationBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,20 +35,21 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     val pendingUid by viewModel.pendingUid.collectAsState()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Water Tracker") }) },
-        floatingActionButton = {
-            if (!isScanning) {
-                FloatingActionButton(onClick = { viewModel.startNfcScan() }) {
-                    Icon(Icons.Default.Add, contentDescription = "Tap Bottle")
-                }
-            }
-        }
+        topBar = { TopAppBar(title = { Text("Water Tracker") }) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(16.dp)
+                .background(
+                    brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                        colors = listOf(
+                            androidx.compose.ui.graphics.Color(0xFFB2EBF2), // teal light
+                            androidx.compose.ui.graphics.Color(0xFFE0F7FA)  // lighter
+                        )
+                    )
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -56,8 +58,10 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 style = MaterialTheme.typography.headlineLarge
             )
 
+            // Scanning banner / progress
             if (isScanning) {
                 Spacer(modifier = Modifier.height(32.dp))
+                // Pulsing animation placeholder – using CircularProgressIndicator for now
                 CircularProgressIndicator()
                 Text(
                     text = "Scanning for NFC tag...",
@@ -67,11 +71,18 @@ fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
                 Button(onClick = { viewModel.stopNfcScan() }) {
                     Text("Cancel")
                 }
+            } else {
+                // Show tap banner when not scanning
+                Text(
+                    text = "Tap bottle to log a drink",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
         }
 
         pendingUid?.let { uid ->
-            RegisterTagDialog(
+            RegistrationBottomSheet(
                 uid = uid,
                 onDismiss = { viewModel.clearPendingTag() },
                 onRegister = { capacity -> viewModel.registerNewTag(uid, capacity) }
